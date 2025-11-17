@@ -56,7 +56,10 @@ class DataAnalysis:
         return hdu_dict
 
     def _str2num(self, instr):
-        instr=instr.strip(' *')
+        
+        instr=instr.replace(' ', '')
+        instr=instr.replace('*', '')
+        
         meas, uncr = instr.split('+/-')
         # check blocks 
         # do nothing for now

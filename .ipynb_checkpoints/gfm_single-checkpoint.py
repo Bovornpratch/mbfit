@@ -356,7 +356,7 @@ class MBfitGalfitM:
     def init_config(self, writefiles=False,
                     ngal=1, npsf=0, map_psf_to='target', 
                     galmod='sersic', fit_withconst=True, add_sky=True, 
-                    cheb_par=[3,0.75,25,4,40,0.0,1.0]):
+                    cheb_par=-1):
 
         # prepare output directory and checks in case 
         os.makedirs(self.outdir, exist_ok=True)
