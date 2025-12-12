@@ -128,11 +128,13 @@ class DataAnalysis:
             bhead = band_dict[band]['header']
             
             stats_dict[band]={'CHISQ':bhead['CHISQ'],
-                              'NFREE':bhead['NGOOD'],
+                              'NGOOD':bhead['NGOOD'],
                               'NFREE':bhead['NFREE'],
                               'NFIX':bhead['NFIX'],
                               'CHI2NU':bhead['CHI2NU'],
                               'NPIX':bhead['NAXIS1']*bhead['NAXIS2'],
+                              'BIC':bhead['CHISQ'] + bhead['NFREE']*np.log(bhead['NGOOD']),
+                              'DOF':bhead['NGOOD'] - bhead['NFREE'],
                               'wavelength': bhead[f'WL_{band}']}
             #print(bhead)
         return stats_dict
