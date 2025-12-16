@@ -459,67 +459,107 @@ class MBfitGalfitM:
             self._write_to_textfile(constr_list, self.gfm_const)
         
         return cfg_dict
-    
-   
-    def execute_fit(self, cfgdict, niter=100, write_res=True, splash=False):
 
-        # config files
+    def _do_check(self, icfg):
+        print('#----------------------------------------------#')
+        print('#          Running pre-fit check list          #')
+
+        runflag=True
+        # check degree of the fitting
+        cheb_flag = icfg['cheb_par'][0]<=len(icfg['image_list'])
+        if cheb_flag is False:
+            print('# chebyshev degree to larger than the number of bands...')
+            
+        runflag = runflag & cheb_flag
+        return runflag
+
+    def _do_fitting(self, res_file, niter):
         print('#----------------------------------------------#')
         print('# FITTING GO BRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR #')
 
-        # set upt files
-        res_file = cfgdict['output_block']
         band_file = res_file.replace('.fits', '.galfit.01.band')
         cheb_file = res_file.replace('.fits', '.galfit.01')
         logfile = res_file.replace('.fits', '.log')
-
+        temp_file = 'temp_file.fits'
+        scomp_file = res_file.replace('.fits','_sc.fits')
+    
         # best fit files
         band_bftxt = res_file.replace('res.fits', 'band_bfpar.txt')
         cheb_bftxt = res_file.replace('res.fits', 'cheb_bfpar.txt')
         
         self.timer=time.time()
-        #"""
         subprocess.run(f'galfitm {self.gfm_cfg}', cwd=self.outdir,  capture_output=True, shell=True)
         _print_time_used(self.timer)
 
-        # clean up
-        subprocess.run(f'mv fit.log {logfile}', cwd=self.outdir, capture_output=True, shell=True)
-        subprocess.run(f'mv {band_file} {band_bftxt}', cwd=self.outdir, capture_output=True, shell=True)
-        subprocess.run(f'mv {cheb_file} {cheb_bftxt}', cwd=self.outdir, capture_output=True, shell=True)
-        #"""
-        # generate sub components
-        temp_file = 'temp_file.fits'
+        if os.path.isfile(os.path.join(self.outdir, res_file)):
+            # clean ups
+            subprocess.run(f'cp fit.log {logfile}', cwd=self.outdir, capture_output=True, shell=True)
+            subprocess.run(f'cp {band_file} {band_bftxt}', cwd=self.outdir, capture_output=True, shell=True)
+            subprocess.run(f'cp {cheb_file} {cheb_bftxt}', cwd=self.outdir, capture_output=True, shell=True)
+
+            # create sub comp
+            subprocess.run(f'mv {res_file} {temp_file}', cwd=self.outdir, capture_output=True, shell=True)
+            subprocess.run(f'galfitm -o3 {band_bftxt}', cwd=self.outdir,  capture_output=True, shell=True)
+            subprocess.run(f'mv {res_file} {scomp_file}', cwd=self.outdir, capture_output=True, shell=True)
+            subprocess.run(f'mv {temp_file} {res_file}', cwd=self.outdir, capture_output=True, shell=True)
+
+            fflag=0
+        else:
+            fflag=1
+        
+        return fflag
+
+
+    def execute_fit(self, cfgdict, niter=100, write_res=True, splash=False):
+        # config files
+        check_res=self._do_check(cfgdict)
+
+        # prepare final output package
+        res_file = cfgdict['output_block']
         scomp_file = res_file.replace('.fits','_sc.fits')
-        #"""
-        subprocess.run(f'mv {res_file} {temp_file}', cwd=self.outdir, capture_output=True, shell=True)
-        subprocess.run(f'galfitm -o3 {band_bftxt}', cwd=self.outdir,  capture_output=True, shell=True)
-        subprocess.run(f'mv {res_file} {scomp_file}', cwd=self.outdir, capture_output=True, shell=True)
-        subprocess.run(f'mv {temp_file} {res_file}', cwd=self.outdir, capture_output=True, shell=True)
-        #"""
-       
-        bfres_path = os.path.join(self.outdir,res_file)
-        outdata_set  = {'resdir': self.outdir, 
+
+        # flags
+        stage_rep={'check':1, 'fit':1}
+        sflag=1
+        # check and run fitting
+        if check_res:
+            print('# Passed Fitting Check list ')
+            stage_rep['check']=0
+            fflag=self._do_fitting(res_file, niter)
+            sflag=0
+            stage_rep['fit']=fflag
+            
+        else:
+            print('# Failed Fitting Check list ')
+            sflag=1
+            stage_rep['check']=1
+            
+        #outdata_set=outdata_setself._do_fitting(cfgdict, check_res)
+        #outdata_set
+        outdata_set  = {'success': sflag, 'stage_report': stage_rep,
+                        'resdir': self.outdir, 
                         'catalog_dict': self.catalog_dict,
                         'refband': self.refband_name,
                         'det_windows': self.det_windows,
                         'fit_windows': self.fit_windows,
                         'proc_data':  self.dataset_dict,
-                        'config_dict' : cfgdict,
+                        'config_dict': cfgdict,
                         'seg_data': self.seg_ima,
-                        'bf_ima':res_file,
-                        'sc_ima':scomp_file}
+                        'bf_ima':res_file, 'sc_ima':scomp_file}
 
+        
         if write_res:
+            print('#                 Saving output                #')
             outfile = self.target_name+'_gfmr_result.pkl'
             outpath = os.path.join(self.outdir, outfile)
             
             with open(outpath, 'wb') as f:
                 pkl.dump(outdata_set, f, 
                          protocol=pkl.HIGHEST_PROTOCOL)
-
+        
         print('#----------------------------------------------#')
-
         return outdata_set
+
 
     def plot_setup(self, ncols=4, fs=3, fontsize=14, plotcat=True, plotfile='./detection.pdf', 
                    saveplot=False, showplot=True, ):
