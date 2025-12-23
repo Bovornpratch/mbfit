@@ -13,15 +13,23 @@ class DataAnalysis:
         self.res_pkl = res_pkl
         self.res_dir = os.path.dirname(self.res_pkl)
         self.dataset = self._load_results()
-
+        
         self.sc_ima=os.path.join(self.res_dir, self.dataset['sc_ima'])
         self.bf_ima=os.path.join(self.res_dir, self.dataset['bf_ima'])
 
-        
         self.obs_bands= self.dataset['config_dict']['band_list']
         self.obs_wavelength= self.dataset['config_dict']['wavelength_list']
-        self.bfmod = self._parse_results()
-        self.stats = self._fetch_summary_stats()
+
+        # this is acutally wrong.....
+        # change in new version later.
+        #if self.dataset['failed']==1:
+        if self.dataset['success']==1:
+            self.bfmod = None
+            self.stats = None
+        else:
+            self.bfmod = self._parse_results()
+            self.stats = self._fetch_summary_stats()
+            
         
     
     def _fetch_file(self, indir, flag):
@@ -140,7 +148,8 @@ class DataAnalysis:
         return stats_dict
 
     def dump_summary(self, outfile):
-        outset={'ObsBand':self.obs_bands,
+        outset={'success':self.dataset['success'],            
+                'ObsBand':self.obs_bands,
                 'ObsWave':self.obs_wavelength, 
                 'Stats': self.stats, 
                 'BestfitMod': self.bfmod,}

@@ -536,7 +536,7 @@ class MBfitGalfitM:
             
         #outdata_set=outdata_setself._do_fitting(cfgdict, check_res)
         #outdata_set
-        outdata_set  = {'success': sflag, 'stage_report': stage_rep,
+        outdata_set  = {'failed': sflag, 'stage_report': stage_rep,
                         'resdir': self.outdir, 
                         'catalog_dict': self.catalog_dict,
                         'refband': self.refband_name,
