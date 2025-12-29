@@ -22,8 +22,8 @@ class DataAnalysis:
 
         # this is acutally wrong.....
         # change in new version later.
-        #if self.dataset['failed']==1:
-        if self.dataset['success']==1:
+        if self.dataset['failed']==1:
+        #if self.dataset['success']==1:
             self.bfmod = None
             self.stats = None
         else:
