@@ -5,8 +5,9 @@ import pickle
 import numpy as np
 import astropy.units as u
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib import gridspec
-
+from astropy.stats import sigma_clipped_stats
 from astropy.coordinates import SkyCoord
 from astropy.nddata import Cutout2D
 from astropy.convolution import convolve, interpolate_replace_nans, Gaussian2DKernel, Tophat2DKernel
@@ -379,9 +380,6 @@ class DataPrep:
             pickle.dump(datapack, f,
                         protocol=pickle.HIGHEST_PROTOCOL)
 
-          
-
-        
             
     def _imascale(self,ima, interval_set='log', a=1000):
         
@@ -395,7 +393,7 @@ class DataPrep:
         return norm
             
     def plot_reference(self, fs=8, plotseg=False, plotfile='./detection.pdf',
-                       saveplot=False, showplot=True, fontsize=25, cmap='gray_r', det_ec='k', det_lw=1.5,
+                       saveplot=False, showplot=True, fontsize=25, cmap='gray_r', det_ec='cyan', det_lw=1.5,
                        target_marker='o',target_markersize=500 , legend_loc=4):
         
         ref_wcs = self.ref_imaset[-1]
@@ -493,5 +491,55 @@ class DataPrep:
             plt.show()
         else:
             plt.clf()
+
+    def plot_background(self, sclip_sigma=3, sclip_maxiter=7, 
+                     plot_hist_nbins=25, plot_hist_xlimfac=5, 
+                     fs=8, plotfile='./bkg_dist.pdf', fontsize=18, 
+                     lw=5):
+    
+        apdata=self.ap_dataset
+        band_names=apdata.keys()
+        seg_map=self.ref_seg
+
+        bkg_pix_dict={}
+        # measure the bacground in the vignette image
+        for band in band_names:
+            ima=apdata[band]['ima_data']
+            bkgpix=ima[seg_map.data==0].flatten()
+        
+            stat=sigma_clipped_stats(bkgpix, sigma=sclip_sigma, maxiters=sclip_maxiter)
+            bkg_pix_dict[band]={'mean':stat[0], 'med':stat[1], 'std':stat[2],
+                                'bkg_pix':bkgpix}
+
+        xlim=np.max(([bkg_pix_dict[i]['std'] for i in bkg_pix_dict.keys()]))
+        bins=np.linspace(-plot_hist_xlimfac*xlim, plot_hist_xlimfac*xlim,
+                         plot_hist_nbins)
+    
+        
+        opdf=PdfPages(plotfile)
+
+        for band in bkg_pix_dict.keys():
+            bdict=bkg_pix_dict[band]
+            pix, med, std=bdict['bkg_pix'],bdict['med'],bdict['std'] 
+            
+            fig=plt.figure(figsize=(8,6), dpi=75)
+            ax1=fig.add_subplot(111)
+        
+            ax1.set_title('{} Med={:.2e} std={:.2e}'.format(band,med,std), 
+                          fontsize=fontsize)
+            ax1.hist(pix, bins=bins,
+            histtype='step',density=True, lw=lw, )
+            ax1.axvline(med, ls='-', lw=lw, label='median')
+            ax1.axvspan(med-std, med+std, alpha=0.2, label='1sig')
+            ax1.axvline(0, ls='dotted', color='k', lw=lw)
+            ax1.legend(fontsize=fontsize)
+            ax1.set_xlabel('Flux (Inst. Units)', fontsize=fontsize)
+    
+            opdf.savefig()
+            plt.close()
+        opdf.close()
+    
+
+        return 0
         
 
