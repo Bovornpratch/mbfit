@@ -155,7 +155,7 @@ class DataPrep:
         if conv_kern.lower()=='tophat':
             kernel= Tophat2DKernel(conv_kernsize)
         else:
-            assert int(conv_kernsize)<int(conv_kernfwhm), 'Kernel size must be larger than FWHM'
+            assert int(conv_kernsize)>int(conv_kernfwhm), 'Kernel size must be larger than FWHM'
             kernel= make_2dgaussian_kernel(conv_kernfwhm, size=conv_kernsize)
         # run convolution
         convolved_data = convolve(bks, kernel)
@@ -242,14 +242,14 @@ class DataPrep:
             
         # run crop
         ima_cr = Cutout2D(imaset[0], center, (csize,csize), wcs=ori_wcs, mode='partial')
-        unc_cr = Cutout2D(imaset[1], center, (csize,csize), wcs=ori_wcs, mode='partial')
+        var_cr = Cutout2D(imaset[1], center, (csize,csize), wcs=ori_wcs, mode='partial')
         bks_cr = Cutout2D(imaset[2], center, (csize,csize), wcs=ori_wcs, mode='partial')
         bkg_cr = Cutout2D(imaset[3], center, (csize,csize), wcs=ori_wcs, mode='partial')
         rms_cr = Cutout2D(imaset[4], center, (csize,csize), wcs=ori_wcs, mode='partial')
         cnv_cr = Cutout2D(imaset[5], center, (csize,csize), wcs=ori_wcs, mode='partial')
         
         ima_wcs=self._recenter_wcs(ima_cr.wcs)
-        outset = [ima_cr.data, unc_cr.data, bks_cr.data, 
+        outset = [ima_cr.data, var_cr.data, bks_cr.data, 
                   bkg_cr.data, rms_cr.data, cnv_cr.data, ima_wcs]
         
         return outset
@@ -437,7 +437,7 @@ class DataPrep:
             plt.clf()
             
     def plot_measurements(self, fs=4, ncols=3, plotcat=True, plotfile='./measurements.pdf', 
-                          saveplot=False, showplot=True, fontsize=18, cmap='gray_r', det_ec='k',det_lw=1.5,
+                          saveplot=False, showplot=True, fontsize=18, cmap='gray_r', det_ec='cyan',det_lw=1.5,
                           target_marker='o', target_markersize=500, legend_loc=4):
     
         ndata=self.n_ima
