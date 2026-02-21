@@ -416,8 +416,8 @@ class DataPrep:
         cat.plot_kron_apertures(ax=ax1, color=det_ec, lw=det_lw)
         
         if self.targ_coord is not None:
-            tc=ref_wcs.world_to_pixel_values(*self.targ_coord)
-            ax1.scatter(tc[1], tc[0], marker=target_marker, ec='crimson', 
+            tc=ref_wcs.wcs_world2pix([np.transpose(self.targ_coord)],1)[0]
+            ax1.scatter(tc[1]+1, tc[0]+1, marker=target_marker, ec='crimson', 
                         fc='None', s=target_markersize, label='Target')
             ax1.legend(loc=legend_loc, fontsize=fontsize-2)
             
@@ -444,7 +444,7 @@ class DataPrep:
         ds_keys=list(self.ap_dataset.keys())
         
         ref_set=self.ref_imaset
-        norm=self._imascale(ref_set[2])
+        #norm=self._imascale(ref_set[2])
         
         # source cats
         cat = self.ref_catobj
@@ -458,7 +458,7 @@ class DataPrep:
                 band=ds_keys[i]
                 ima_set = self.ap_dataset[band]
                 ima_wcs = ima_set['ima_wcs']
-                
+                norm=self._imascale(ima_set['ima_data'])
                 #norm=self._imascale(ima_set['ima_data'])
                 ax.imshow(ima_set['ima_data'], norm=norm, origin='lower', cmap=cmap)
                 
@@ -470,8 +470,8 @@ class DataPrep:
                     cat.plot_kron_apertures(ax=ax, color=det_ec, lw=det_lw)
                     
                 if self.targ_coord is not None:
-                    tc=ima_wcs.world_to_pixel_values(*self.targ_coord)
-                    ax.scatter(tc[1], tc[0], marker=target_marker, ec='crimson', fc='None', s=target_markersize,
+                    tc=ima_wcs.wcs_world2pix([np.transpose(self.targ_coord)],1)[0]
+                    ax.scatter(tc[1]+1, tc[0]+1, marker=target_marker, ec='crimson', fc='None', s=target_markersize,
                                label='Target')
                     ax.legend(loc=legend_loc, fontsize=fontsize-2)
                 
