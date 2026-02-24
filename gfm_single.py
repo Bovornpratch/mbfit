@@ -8,6 +8,7 @@ import matplotlib.patches as patches
 from scipy.ndimage import binary_dilation
 #from scripts.mbfit.utils import _init_catalog_dict
 from .galfitm.models import Sersic, Pointsource, Sky2D
+from .galfitm.plots import plot_residuals, plot_psf_subimage
 from .utils import _print_time_used, _init_catalog_dict
 
 from astropy.io  import fits
@@ -435,14 +436,14 @@ class MBfitGalfitM:
         if add_sky:
             compname=f'ID{i}_mod_sky2d_comp_{0}'
             smod = Sky2D(mod_id, compname=compname)
+            # I can fix and set the background here
+            
             smod.setup_pars(i,self.segmap, self.dataset_dict)
             parstr_list+=smod.dump_parstr()
 
             mod_dict['sky']={'mod_index': [mod_id]}
             mod_id+=1
             compnum+=1
-            
-            
             
 
         # set model and const
@@ -490,7 +491,7 @@ class MBfitGalfitM:
         self.timer=time.time()
         subprocess.run(f'galfitm {self.gfm_cfg}', cwd=self.outdir,  capture_output=True, shell=True)
         _print_time_used(self.timer)
-
+        
         if os.path.isfile(os.path.join(self.outdir, res_file)):
             # clean ups
             subprocess.run(f'cp fit.log {logfile}', cwd=self.outdir, capture_output=True, shell=True)
@@ -502,7 +503,7 @@ class MBfitGalfitM:
             subprocess.run(f'galfitm -o3 {band_bftxt}', cwd=self.outdir,  capture_output=True, shell=True)
             subprocess.run(f'mv {res_file} {scomp_file}', cwd=self.outdir, capture_output=True, shell=True)
             subprocess.run(f'mv {temp_file} {res_file}', cwd=self.outdir, capture_output=True, shell=True)
-
+            
             fflag=0
         else:
             fflag=1
@@ -534,10 +535,9 @@ class MBfitGalfitM:
             sflag=1
             stage_rep['check']=1
             
-        #outdata_set=outdata_setself._do_fitting(cfgdict, check_res)
-        #outdata_set
+
         outdata_set  = {'failed': sflag, 'stage_report': stage_rep,
-                        'resdir': self.outdir, 
+                        'resdir': os.path.abspath(self.outdir), 
                         'catalog_dict': self.catalog_dict,
                         'refband': self.refband_name,
                         'det_windows': self.det_windows,
@@ -547,6 +547,20 @@ class MBfitGalfitM:
                         'seg_data': self.seg_ima,
                         'bf_ima':res_file, 'sc_ima':scomp_file}
 
+        # create residual plots
+        outpdf = self.target_name+'_gfmr_resid.pdf'
+        outpdf_path = os.path.join(self.outdir, outpdf)
+        plot_residuals(outdata_set, plotfile=outpdf_path, 
+                       saveplot=True, showplot=False)
+
+        # create psfsub plots
+        outpsfsub = self.target_name+'_gfmr_psfsub.pdf'
+        outpsfsub_path = os.path.join(self.outdir, outpsfsub)
+        plot_psf_subimage(outdata_set, plotfile=outpsfsub_path,
+                          saveplot=True, showplot=False,
+                          save_fits=True)
+        
+        
         
         if write_res:
             print('#                 Saving output                #')
@@ -568,6 +582,10 @@ class MBfitGalfitM:
         nrows=int(np.ceil(ndata/ncols))
         nsp=nrows*ncols
 
+        # calculate reference normalization
+        ref_ima=self.dataset_dict[self.refband_name]['ima_data']
+        norm=ImageNormalize(ref_ima, stretch=LogStretch(), interval=MinMaxInterval())
+        
         fig, axs = plt.subplots(figsize=(ncols*fs, nrows*fs+0.25), nrows=nrows, ncols=ncols)
         axs=axs.ravel()
 
@@ -582,9 +600,6 @@ class MBfitGalfitM:
             inv_mask = (~mask).astype(int)
             pdata=ddict['ima_data'].copy()
             
-            norm=ImageNormalize(ddict['ima_data']*inv_mask,
-                                stretch=LogStretch(), interval=MinMaxInterval())
-
             pdata[mask==True]=np.nan
 
             # Choose the color
