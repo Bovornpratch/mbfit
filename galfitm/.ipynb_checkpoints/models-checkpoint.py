@@ -221,19 +221,21 @@ class Sky2D(GFMModel):
         GFMModel.__init__(self, comp_id, compname)
 
         self.modname = 'sky'
-        self.par_dict={'bkg': {'ind':1, 'val':0, 'fflag': 3, 'lims': [], 'txt': '# average background '},
-                        'dx': {'ind':2, 'val':0, 'fflag': 3, 'lims': [], 'txt': '# x-position'},
-                        'dy': {'ind':3, 'val':0, 'fflag': 3, 'lims': [], 'txt': '# y-position'},}
+        self.par_dict={'bkg': {'ind':1, 'val':0, 'fflag': 2, 'lims': [], 'txt': '# average background '},
+                        'dx': {'ind':2, 'val':0, 'fflag': 2, 'lims': [], 'txt': '# x-position'},
+                        'dy': {'ind':3, 'val':0, 'fflag': 2, 'lims': [], 'txt': '# y-position'},}
 
     def setup_pars(self, label, segmap, data_dict, limits=[], boundwith=None):
         # reset background level to a certain value
-        #segm=segmap.data
-        #for i, key in enumerate(data_dict):
-        #    ddict=data_dict[key]
-        #    print(ddict.leys())
+        segm=segmap.data
+        fbkg=[]
+        for i, key in enumerate(data_dict):
+            ddict=data_dict[key]
+            ima_data=ddict['ima_data'][segm==0]
+            fbkg.append(np.median(ima_data))
         
-        
-        self.par_dict['bkg']['val'] = [0 for i in list(data_dict.keys())]
+        self.par_dict['bkg']['val'] = self._setvals(fbkg)
+        #self.par_dict['bkg']['val'] = [0 for i in list(data_dict.keys())]
             
             
          
