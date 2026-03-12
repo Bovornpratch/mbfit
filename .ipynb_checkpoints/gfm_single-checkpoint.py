@@ -532,19 +532,6 @@ class MBfitGalfitM:
             fflag=self._do_fitting(res_file, niter)
             sflag=0
             stage_rep['fit']=fflag
-
-            # create residual plots
-            outpdf = self.target_name+'_gfmr_resid.pdf'
-            outpdf_path = os.path.join(self.outdir, outpdf)
-            plot_residuals(outdata_set, plotfile=outpdf_path, 
-                           saveplot=True, showplot=False)
-
-            # create psfsub plots
-            outpsfsub = self.target_name+'_gfmr_psfsub.pdf'
-            outpsfsub_path = os.path.join(self.outdir, outpsfsub)
-            plot_psf_subimage(outdata_set, plotfile=outpsfsub_path,
-                              saveplot=True, showplot=False,
-                              save_fits=True)
             
         else:
             print('# Failed Fitting Check list ')
@@ -562,7 +549,25 @@ class MBfitGalfitM:
                         'config_dict': cfgdict,
                         'seg_data': self.seg_ima,
                         'bf_ima':res_file, 'sc_ima':scomp_file}
-                
+
+        # passed fitting
+        if check_res:
+            try:
+                # create residual plots
+                outpdf = self.target_name+'_gfmr_resid.pdf'
+                outpdf_path = os.path.join(self.outdir, outpdf)
+                plot_residuals(outdata_set, plotfile=outpdf_path, 
+                               saveplot=True, showplot=False)
+
+                # create psfsub plots
+                outpsfsub = self.target_name+'_gfmr_psfsub.pdf'
+                outpsfsub_path = os.path.join(self.outdir, outpsfsub)
+                plot_psf_subimage(outdata_set, plotfile=outpsfsub_path,
+                              saveplot=True, showplot=False,
+                              save_fits=True)
+            except:
+                print(f'Failed Plotting step for {self.target_name}')
+
         if write_res:
             print('#                 Saving output                #')
             outfile = self.target_name+'_gfmr_result.pkl'
