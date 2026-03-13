@@ -252,7 +252,7 @@ class MBfitGalfitM:
                 'J)\t'+self._parse_text(cfg['zp_list']),
                 'K)\t'+self._parse_text(cfg['platescale'],' '),
                 'O) regular', 'P)  0', 
-                'U) '+self._parse_text(cfg['cheb_par'], delim=' '),
+                #'U) '+self._parse_text(cfg['cheb_par'], delim=' '),
                 'V) 0', 'W) default',
                 '#CONFIGHEADER_END']
         
