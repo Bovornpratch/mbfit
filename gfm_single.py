@@ -42,8 +42,8 @@ class MBfitGalfitM:
         self.catalog_dict = _init_catalog_dict(self.catalog)
 
         # additional image attributes
-        self.ysize,self.xsize = self.seg_ima.shape
-        self.ycen,self.xcen=(int(i/2) for i in self.seg_ima.shape)
+        self.ysize, self.xsize = self.seg_ima.shape
+        self.ycen, self.xcen=(int(i/2) for i in self.seg_ima.shape)
 
         # sets source attributes
         self.target_name = target_name
@@ -539,7 +539,8 @@ class MBfitGalfitM:
             stage_rep['check']=1
             
 
-        outdata_set  = {'failed': sflag, 'stage_report': stage_rep,
+        outdata_set  = {'target_id':self.target_id,
+                        'failed': sflag, 'stage_report': stage_rep,
                         'resdir': os.path.abspath(self.outdir), 
                         'catalog_dict': self.catalog_dict,
                         'refband': self.refband_name,
