@@ -133,8 +133,6 @@ class Sersic(GFMModel):
                        'n':  {'ind':5, 'val':1.,    'fflag': 3, 'lims': [], 'txt': '# sersic index'},
                        'axr': {'ind':9, 'val':0.5,  'fflag': 1, 'lims': [], 'txt': '# axis ratio'},
                        'pa':  {'ind':10,'val':0,    'fflag': 1, 'lims': [], 'txt': '# PA'}}
-
-        
         
     def setup_pars(self, label, segmap, data_dict):
         mag_list=[]
@@ -152,15 +150,17 @@ class Sersic(GFMModel):
                 self.par_dict['pa']['val'] = self._setvals(90- obj_dict['orientation'].value)
 
                  # set the limits 
-                xlim=self._setvals([obj_dict['bbox_xmin'],  obj_dict['bbox_xmax']])
-                ylim=self._setvals([obj_dict['bbox_ymin'],  obj_dict['bbox_ymax']])
                 dx=obj_dict['bbox_xmax']-obj_dict['bbox_xmin']
                 dy=obj_dict['bbox_ymax']-obj_dict['bbox_ymin']
+                xpad,ypad=dx/3, dy/3
                 rpix = self._setvals(np.sqrt(dx*dx + dy*dy))
+                
+                xlim=self._setvals([obj_dict['bbox_xmin']+xpad,  obj_dict['bbox_xmax']-xpad])
+                ylim=self._setvals([obj_dict['bbox_ymin']+ypad,  obj_dict['bbox_ymax']-ypad])
                 
                 self.par_dict['x']['lims'].append({'ctype': 'to', 'clims':xlim})
                 self.par_dict['y']['lims'].append({'ctype': 'to', 'clims':ylim})
-                self.par_dict['re']['lims'].append({'ctype': 'to', 'clims': [0.3, rpix]})
+                self.par_dict['re']['lims'].append({'ctype': 'to', 'clims': [0.5, rpix]})
                 self.par_dict['n']['lims'].append({'ctype': 'to', 'clims': [0.3, 8]})
                 
                 
@@ -170,7 +170,15 @@ class Sersic(GFMModel):
         # clean up nans
         self.par_dict['mag']['val'] = self._setvals(mag_list)
         self.par_dict['mag']['lims'].append({'ctype': 'to', 'clims':[0,40]})
+
+    def set_fit_flags(self,flagdict={}):
+        if len(flagdict)>0:
+            for key in flagdict.keys():
+                self.par_dict[key]['fflag']=flagdict[key]
+        else:
+            pass
             
+
     
 class Pointsource(GFMModel):
     """
@@ -201,8 +209,12 @@ class Pointsource(GFMModel):
                 self.par_dict['y']['val'] = self._setvals(obj_dict['ycentroid'])
 
                 # set the limits 
-                xlim=self._setvals([obj_dict['bbox_xmin'],  obj_dict['bbox_xmax']])
-                ylim=self._setvals([obj_dict['bbox_ymin'],  obj_dict['bbox_ymax']])
+                dx=obj_dict['bbox_xmax']-obj_dict['bbox_xmin']
+                dy=obj_dict['bbox_ymax']-obj_dict['bbox_ymin']
+                xpad,ypad=dx/3, dy/3
+                
+                xlim=self._setvals([obj_dict['bbox_xmin']+xpad,  obj_dict['bbox_xmax']-xpad])
+                ylim=self._setvals([obj_dict['bbox_ymin']+ypad,  obj_dict['bbox_ymax']-ypad])
                 self.par_dict['x']['lims'].append({'ctype': 'to', 'clims':xlim})
                 self.par_dict['y']['lims'].append({'ctype': 'to', 'clims':ylim})
                 
@@ -215,6 +227,14 @@ class Pointsource(GFMModel):
         self.par_dict['mag']['lims'].append({'ctype': 'to', 'clims':[0,40]})
 
         # overwrite limits
+        
+    def set_fit_flags(self,flagdict={}):
+        if len(flagdict)>0:
+            for key in flagdict.keys():
+                self.par_dict[key]['fflag']=flagdict[key]
+        else:
+            pass
+        
 
 class Sky2D(GFMModel):
     def __init__(self, comp_id, compname):

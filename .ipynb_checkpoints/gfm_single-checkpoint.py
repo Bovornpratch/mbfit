@@ -8,7 +8,7 @@ import matplotlib.patches as patches
 from scipy.ndimage import binary_dilation
 #from scripts.mbfit.utils import _init_catalog_dict
 from .galfitm.models import Sersic, Pointsource, Sky2D
-from .galfitm.plots import plot_residuals, plot_psf_subimage
+from .galfitm.plots import plot_residuals, plot_psf_subimage, plot_measurements
 from .utils import _print_time_used, _init_catalog_dict
 
 from astropy.io  import fits
@@ -360,6 +360,7 @@ class MBfitGalfitM:
     def init_config(self, writefiles=False,
                     ngal=1, npsf=0, map_psf_to='target', 
                     galmod='sersic', fit_withconst=True, add_sky=True, 
+                    fix_galpos=False, fix_psfpos=False,
                     cheb_par=[3,0.75,25,4,40,0.0,1]):
 
         # prepare output directory and checks in case 
@@ -396,6 +397,7 @@ class MBfitGalfitM:
 
         mod_dict={}
         mod_id=1
+        nbands=len(self.dataset_dict)
         for i in self.fit_windows:
             compnum=1
             modlist = []
@@ -407,6 +409,13 @@ class MBfitGalfitM:
                 compname=f'ID{i}_mod_{galmod}_comp_{mod_id}'
                 gmod = Galmod(mod_id, compname=compname)
                 gmod.setup_pars(i,self.segmap, self.dataset_dict)
+                gmod.set_fit_flags({'mag':nbands, 're':nbands, 
+                                    'n':nbands, 'axr':nbands})
+                if fix_galpos:
+                    gmod.set_fit_flags({'x':1,'y':1})
+                else:
+                    gmod.set_fit_flags({'x':nbands,'y':nbands})
+                    
                 parstr_list+=gmod.dump_parstr()
                 constr_list+=gmod.dump_const()+['\n']
 
@@ -425,6 +434,12 @@ class MBfitGalfitM:
                     compname=f'ID{i}_mod_psrc_comp_{mod_id}'
                     pmod = Pointsource(mod_id, compname=compname)
                     pmod.setup_pars(i,self.segmap, self.dataset_dict)
+                    pmod.set_fit_flags({'mag':nbands})
+                    if fix_psfpos:
+                        pmod.set_fit_flags({'x':1,'y':1})
+                    else:
+                        pmod.set_fit_flags({'x':nbands,'y':nbands})
+                
                     parstr_list+=pmod.dump_parstr()
                     constr_list+=pmod.dump_const()+['\n']
                 
@@ -461,6 +476,13 @@ class MBfitGalfitM:
             print(f'Writing constrain file {self.gfm_const}')
             cfg_dict['const_str']=constr_list
             self._write_to_textfile(constr_list, self.gfm_const)
+
+
+        # plot_data
+        setup_fig = self.target_name+'_gfmr_setup.pdf'
+        setup_figpath = os.path.join(self.outdir, setup_fig)
+        self.plot_setup(saveplot=True, plotfile=setup_figpath)
+        
         
         return cfg_dict
 
@@ -583,7 +605,7 @@ class MBfitGalfitM:
 
 
     def plot_setup(self, ncols=4, fs=3, fontsize=14, plotcat=True, plotfile='./detection.pdf', 
-                   saveplot=False, showplot=True, ):
+                   saveplot=False, showplot=False, ):
 
         ndata=len(self.bandnames)
         nrows=int(np.ceil(ndata/ncols))

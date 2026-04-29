@@ -74,14 +74,12 @@ class GalfitmBatchProc:
         # nothing to do
 
         # set up the analysis object
-        mbfit_obj=MBfitGalfitM(indict, outdir=toutdir,
-                               target_name=indict['target_name'])
         try:
-            
-            setup_pdf=os.path.join(toutdir, tname+'_setup.pdf')
-            mbfit_obj.plot_setup(plotfile=setup_pdf, saveplot=True, 
-                                 showplot=self.showplots)
-            
+            mbfit_obj=MBfitGalfitM(indict, outdir=toutdir,
+                               target_name=indict['target_name'])    
+            #setup_pdf=os.path.join(toutdir, tname+'_setup.pdf')
+            #mbfit_obj.plot_setup(plotfile=setup_pdf, saveplot=True, 
+            #                     showplot=self.showplots)
         except:
             res_dict['Failed']=1
             res_dict['stage_track']['InitMod']=1
