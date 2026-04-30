@@ -153,6 +153,7 @@ class Sersic(GFMModel):
                 dx=obj_dict['bbox_xmax']-obj_dict['bbox_xmin']
                 dy=obj_dict['bbox_ymax']-obj_dict['bbox_ymin']
                 xpad,ypad=dx/4, dy/4
+                xpad,ypad=0,0
                 rpix = self._setvals(np.sqrt(dx*dx + dy*dy))
                 
                 xlim=self._setvals([obj_dict['bbox_xmin']+xpad,  obj_dict['bbox_xmax']-xpad])
@@ -212,6 +213,7 @@ class Pointsource(GFMModel):
                 dx=obj_dict['bbox_xmax']-obj_dict['bbox_xmin']
                 dy=obj_dict['bbox_ymax']-obj_dict['bbox_ymin']
                 xpad,ypad=dx/4, dy/4
+                xpad,ypad=0,0
                 
                 xlim=self._setvals([obj_dict['bbox_xmin']+xpad,  obj_dict['bbox_xmax']-xpad])
                 ylim=self._setvals([obj_dict['bbox_ymin']+ypad,  obj_dict['bbox_ymax']-ypad])
