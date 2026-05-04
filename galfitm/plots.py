@@ -6,6 +6,46 @@ from astropy.wcs import WCS
 from astropy.visualization import ImageNormalize, LogStretch, LinearStretch, MinMaxInterval, ZScaleInterval
 from astropy.io import fits
 
+def plot_setup(resdict, ncols=4, fs=3, fontsize=15, plotfile='./setup.pdf', 
+               stdscale=5, saveplot=False, showplot=True, )
+
+    # fetch bestfit file
+    bffile=os.path.join(resdict['resdir'], resdict['bf_ima'])
+    indata=resdict['proc_data']
+    
+    config=resdict['config_dict']
+    fb=config['fitbounds']
+    imset=config['ima_set']
+    segmap=resdict['seg_data'][fb[2]-1:fb[3],fb[0]-1:fb[1]]
+    
+    # read input fits file
+    ima_hdu=fits.open(bffile)
+
+    hdu_names=[i.name for i in ima_hdu] 
+    band_list=[i.name.split('_') [1] for i in ima_hdu  if 'INPUT_' in i.name ]
+    
+    band_dict={}
+    
+    for band in band_list:
+    
+        inp_hdu=ima_hdu[hdu_names.index(f'INPUT_{band}')]
+        res_hdu=ima_hdu[hdu_names.index(f'RESIDUAL_{band}')]
+        mod_hdu=ima_hdu[hdu_names.index(f'MODEL_{band}')]
+
+        unc_data=imset[band]['unc']
+        msk_data=imset[band]['mask']
+        
+        unc_data=unc_data[fb[2]-1:fb[3],fb[0]-1:fb[1]]
+        msk_data=msk_data[fb[2]-1:fb[3],fb[0]-1:fb[1]]
+        
+        band_dict[band]={'ima_data':inp_hdu.data,
+                         'unc_data':unc_data,
+                         'res_data':res_hdu.data,
+                         'mod_data':mod_hdu.data,
+                         'msk_data':msk_data,}
+
+    
+
 def plot_residuals(resdict, ncols=4, fs=3, fontsize=15, plotfile='./residual.pdf', 
                    stdscale=5, saveplot=False, showplot=True, ):
 
@@ -139,6 +179,9 @@ def plot_psf_subimage(resdict, ncols=4, fs=3, fontsize=15, plotfile='./psf_sub.p
     refband=resdict['refband']
     
     norm=ImageNormalize(band_dict[refband]['ima_data'], stretch=LogStretch(), interval=MinMaxInterval())
+    refpix=band_dict[refband]['ima_data']
+    
+    vmin, vmax=np.nanpercentile(refpix,0.01),np.nanpercentile(refpix,99.95)
     
     ndata=len(band_list)
     nrows=int(np.ceil(ndata/ncols))
@@ -150,8 +193,10 @@ def plot_psf_subimage(resdict, ncols=4, fs=3, fontsize=15, plotfile='./psf_sub.p
         band = band_list[i]
         bdict=band_dict[band]
         ima=bdict['ima_data']
-
-        axs[i].imshow(ima, origin='lower', norm=norm, cmap='gray_r')
+        
+        #vmin, vmax=np.nanpercentile(ima,0.05),np.nanpercentile(ima,99.9)
+        #axs[i].imshow(ima, origin='lower', norm=norm, cmap='gray_r')
+        axs[i].imshow(ima, origin='lower', vmin=vmin, vmax=vmax, cmap='gray_r')
         #axs[i].imshow(msk, origin='lower', norm=None, cmap='gray')
         axs[i].set_title(band, fontsize=fontsize)
         axs[i].set_xlim(0, ima.shape[0])

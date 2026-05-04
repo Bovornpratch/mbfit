@@ -156,7 +156,8 @@ class DataAnalysis:
     
         with open(outfile, 'wb') as f:
             pkl.dump(outset, f)
-            
+
+        return outset
 
  
         
