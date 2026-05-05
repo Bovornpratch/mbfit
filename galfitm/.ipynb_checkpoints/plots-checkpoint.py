@@ -7,7 +7,7 @@ from astropy.visualization import ImageNormalize, LogStretch, LinearStretch, Min
 from astropy.io import fits
 
 def plot_setup(resdict, ncols=4, fs=3, fontsize=15, plotfile='./setup.pdf', 
-               stdscale=5, saveplot=False, showplot=True, )
+               stdscale=5, saveplot=False, showplot=True, ):
 
     # fetch bestfit file
     bffile=os.path.join(resdict['resdir'], resdict['bf_ima'])
@@ -44,7 +44,43 @@ def plot_setup(resdict, ncols=4, fs=3, fontsize=15, plotfile='./setup.pdf',
                          'mod_data':mod_hdu.data,
                          'msk_data':msk_data,}
 
+    refband=resdict['refband']
+    refpix=band_dict[refband]['ima_data']
+    norm=ImageNormalize(refpix, stretch=LogStretch(), interval=MinMaxInterval())
     
+    # plot it
+    ndata=len(band_list)
+    nrows=int(np.ceil(ndata/ncols))
+    nsp=nrows*ncols
+    fig, axs = plt.subplots(figsize=(ncols*fs, nrows*fs+0.25), nrows=nrows, ncols=ncols)
+    axs=axs.ravel()
+    
+    for i in range(0, len(band_list)):
+        band = band_list[i]
+        bdict=band_dict[band]
+
+        ima=bdict['ima_data']
+        unc=bdict['unc_data']
+        res=bdict['res_data']
+        msk=bdict['msk_data']
+        
+        nres=ima.copy()
+        nres[msk>0]=np.nan
+        
+        #axs[i].imshow(ima, origin='lower', vmin=vmin, vmax=vmax, cmap='PuOr_r')
+        axs[i].imshow(nres, origin='lower', norm=norm, cmap='gray_r')
+        axs[i].set_title(band, fontsize=fontsize)
+        axs[i].set_xlim(0, ima.shape[0])
+        axs[i].set_ylim(0, ima.shape[1])
+
+    fig.tight_layout()
+        
+    if saveplot:
+        plt.savefig(plotfile, bbox_inches='tight')
+    if showplot:
+        plt.show()
+    else:
+        plt.clf()
 
 def plot_residuals(resdict, ncols=4, fs=3, fontsize=15, plotfile='./residual.pdf', 
                    stdscale=5, saveplot=False, showplot=True, ):
@@ -161,13 +197,14 @@ def plot_psf_subimage(resdict, ncols=4, fs=3, fontsize=15, plotfile='./psf_sub.p
         psf_index=[scp_names.index(i) for i in scp_names if f'_psf_{band}' in i] 
 
         # loop subtract
-        ima_data=inp_hdu.data
+        psfsub_data=inp_hdu.data.copy()
         # psf_index=[] for test when there are now PSF models
         for ind in psf_index:
-            ima_data-=scp_hdu[ind].data
+            psfsub_data-=scp_hdu[ind].data
 
         # save the datasets out
-        band_dict[band]={'ima_data':ima_data,
+        band_dict[band]={'ima_data':inp_hdu.data, 
+                         'psfsub_data': psfsub_data,
                          'unc_data':unc_data,
                          'msk_data':msk_data,
                          'ima_wcs':inp_wcs}
@@ -177,9 +214,8 @@ def plot_psf_subimage(resdict, ncols=4, fs=3, fontsize=15, plotfile='./psf_sub.p
     # plot it
     # calcualte normatlization
     refband=resdict['refband']
-    
-    norm=ImageNormalize(band_dict[refband]['ima_data'], stretch=LogStretch(), interval=MinMaxInterval())
     refpix=band_dict[refband]['ima_data']
+    norm=ImageNormalize(refpix, stretch=LogStretch(), interval=MinMaxInterval())
     
     vmin, vmax=np.nanpercentile(refpix,0.01),np.nanpercentile(refpix,99.95)
     
@@ -193,10 +229,13 @@ def plot_psf_subimage(resdict, ncols=4, fs=3, fontsize=15, plotfile='./psf_sub.p
         band = band_list[i]
         bdict=band_dict[band]
         ima=bdict['ima_data']
+        unc=bdict['unc_data']
+        msk=bdict['msk_data']
+        psfsub=bdict['psfsub_data']
         
         #vmin, vmax=np.nanpercentile(ima,0.05),np.nanpercentile(ima,99.9)
-        #axs[i].imshow(ima, origin='lower', norm=norm, cmap='gray_r')
-        axs[i].imshow(ima, origin='lower', vmin=vmin, vmax=vmax, cmap='gray_r')
+        axs[i].imshow(psfsub, origin='lower', norm=norm, cmap='gray_r')
+        #axs[i].imshow(psfsub, origin='lower', vmin=vmin, vmax=vmax, cmap='gray_r')
         #axs[i].imshow(msk, origin='lower', norm=None, cmap='gray')
         axs[i].set_title(band, fontsize=fontsize)
         axs[i].set_xlim(0, ima.shape[0])

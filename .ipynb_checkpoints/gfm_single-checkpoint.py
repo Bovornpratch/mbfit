@@ -562,6 +562,7 @@ class MBfitGalfitM:
             
 
         outdata_set  = {'target_id':self.target_id,
+                        'target_name':self.target_name,
                         'failed': sflag, 'stage_report': stage_rep,
                         'resdir': os.path.abspath(self.outdir), 
                         'catalog_dict': self.catalog_dict,
