@@ -46,7 +46,8 @@ def plot_setup(resdict, ncols=4, fs=3, fontsize=15, plotfile='./setup.pdf',
 
     refband=resdict['refband']
     refpix=band_dict[refband]['ima_data']
-    norm=ImageNormalize(refpix, stretch=LogStretch(), interval=MinMaxInterval())
+    refmask=band_dict[refband]['msk_data']
+    norm=ImageNormalize(refpix[refmask==0], stretch=LogStretch(), interval=MinMaxInterval())
     
     # plot it
     ndata=len(band_list)
@@ -54,6 +55,8 @@ def plot_setup(resdict, ncols=4, fs=3, fontsize=15, plotfile='./setup.pdf',
     nsp=nrows*ncols
     fig, axs = plt.subplots(figsize=(ncols*fs, nrows*fs+0.25), nrows=nrows, ncols=ncols)
     axs=axs.ravel()
+    plt.suptitle('Images', fontsize=fontsize)
+
     
     for i in range(0, len(band_list)):
         band = band_list[i]
@@ -127,6 +130,7 @@ def plot_residuals(resdict, ncols=4, fs=3, fontsize=15, plotfile='./residual.pdf
     nsp=nrows*ncols
     fig, axs = plt.subplots(figsize=(ncols*fs, nrows*fs+0.25), nrows=nrows, ncols=ncols)
     axs=axs.ravel()
+    plt.suptitle('Uncertainty Weighted Residual', fontsize=fontsize)
     
     for i in range(0, len(band_list)):
         band = band_list[i]
@@ -215,7 +219,8 @@ def plot_psf_subimage(resdict, ncols=4, fs=3, fontsize=15, plotfile='./psf_sub.p
     # calcualte normatlization
     refband=resdict['refband']
     refpix=band_dict[refband]['ima_data']
-    norm=ImageNormalize(refpix, stretch=LogStretch(), interval=MinMaxInterval())
+    refmask=band_dict[refband]['msk_data']
+    norm=ImageNormalize(refpix[refmask==0], stretch=LogStretch(), interval=MinMaxInterval())
     
     vmin, vmax=np.nanpercentile(refpix,0.01),np.nanpercentile(refpix,99.95)
     
@@ -224,6 +229,7 @@ def plot_psf_subimage(resdict, ncols=4, fs=3, fontsize=15, plotfile='./psf_sub.p
     nsp=nrows*ncols
     fig, axs = plt.subplots(figsize=(ncols*fs, nrows*fs+0.25), nrows=nrows, ncols=ncols)
     axs=axs.ravel()
+    plt.suptitle('PSF Subtracted', fontsize=fontsize)
 
     for i in range(0, len(band_list)):
         band = band_list[i]
@@ -233,10 +239,7 @@ def plot_psf_subimage(resdict, ncols=4, fs=3, fontsize=15, plotfile='./psf_sub.p
         msk=bdict['msk_data']
         psfsub=bdict['psfsub_data']
         
-        #vmin, vmax=np.nanpercentile(ima,0.05),np.nanpercentile(ima,99.9)
         axs[i].imshow(psfsub, origin='lower', norm=norm, cmap='gray_r')
-        #axs[i].imshow(psfsub, origin='lower', vmin=vmin, vmax=vmax, cmap='gray_r')
-        #axs[i].imshow(msk, origin='lower', norm=None, cmap='gray')
         axs[i].set_title(band, fontsize=fontsize)
         axs[i].set_xlim(0, ima.shape[0])
         axs[i].set_ylim(0, ima.shape[1])
@@ -273,8 +276,7 @@ def plot_psf_subimage(resdict, ncols=4, fs=3, fontsize=15, plotfile='./psf_sub.p
         outhdu=fits.HDUList(hdulist)
         outhdu.writeto(outfits, overwrite=True)
 
-def plot_measurements(datadict):
-    pass
+
 
     
     
