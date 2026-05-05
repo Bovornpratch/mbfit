@@ -8,7 +8,7 @@ import matplotlib.patches as patches
 from scipy.ndimage import binary_dilation
 #from scripts.mbfit.utils import _init_catalog_dict
 from .galfitm.models import Sersic, Pointsource, Sky2D
-from .galfitm.plots import plot_residuals, plot_psf_subimage, plot_measurements
+from .galfitm.plots import plot_residuals, plot_psf_subimage
 from .utils import _print_time_used, _init_catalog_dict
 
 from astropy.io  import fits
