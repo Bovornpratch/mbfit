@@ -149,6 +149,7 @@ class DataAnalysis:
 
     def dump_summary(self, outfile):
         outset={'failed':self.dataset['failed'], 
+                'target_name':self.dataset['target_name'],           
     	        'target_id':self.dataset['target_id'],           
                 'ObsBand':self.obs_bands,
                 'ObsWave':self.obs_wavelength, 
