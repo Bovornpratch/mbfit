@@ -84,6 +84,7 @@ def plot_setup(resdict, ncols=4, fs=3, fontsize=15, plotfile='./setup.pdf',
         plt.show()
     else:
         plt.clf()
+    plt.close(fig)
 
 def plot_residuals(resdict, ncols=4, fs=3, fontsize=15, plotfile='./residual.pdf', 
                    stdscale=5, saveplot=False, showplot=True, ):
@@ -161,6 +162,7 @@ def plot_residuals(resdict, ncols=4, fs=3, fontsize=15, plotfile='./residual.pdf
         plt.show()
     else:
         plt.clf()
+    plt.close(fig)
                       
 
 def plot_psf_subimage(resdict, ncols=4, fs=3, fontsize=15, plotfile='./psf_sub.pdf', 
@@ -275,6 +277,8 @@ def plot_psf_subimage(resdict, ncols=4, fs=3, fontsize=15, plotfile='./psf_sub.p
 
         outhdu=fits.HDUList(hdulist)
         outhdu.writeto(outfits, overwrite=True)
+
+    plt.close(fig)
 
 
 
